@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindHaven | Your Mental Wellness Companion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600&display=swap');
+
+        :root {
+            --bg-calm: #f0f4f3;
+            --sage: #8da99a;
+            --lavender: #b3b1d6;
+            --text-dark: #2d3436;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-calm);
+            color: var(--text-dark);
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        body.dark-mode {
+            --bg-calm: #1a1c1b;
+            --text-dark: #e2e8f0;
+            background-color: var(--bg-calm);
+            color: var(--text-dark);
+        }
+
+        .dark-mode .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .dark-mode .tab-active {
+            background-color: #334155;
+            color: #10b981;
+        }
+
+        .dark-mode .text-slate-500 { color: #94a3b8; }
+        .dark-mode .text-slate-600 { color: #cbd5e1; }
+        .dark-mode .text-slate-700 { color: #f1f5f9; }
+        .dark-mode .bg-slate-200\/50 { background-color: rgba(51, 65, 85, 0.5); }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 24px;
+        }
+
+        /* Breathing Animation */
+        .breath-circle {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--sage), var(--lavender));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            transition: transform 4s ease-in-out;
+            box-shadow: 0 0 40px rgba(141, 169, 154, 0.3);
+        }
+
+        .inhale { transform: scale(1.5); }
+        .exhale { transform: scale(1.0); }
+
+        /* Sound Visualizer Animation */
+        .bar {
+            width: 4px;
+            height: 20px;
+            background: var(--sage);
+            margin: 0 2px;
+            border-radius: 10px;
+            animation: bounce 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes bounce {
+            from { height: 5px; }
+            to { height: 25px; }
+        }
+
+        .tab-active {
+            background-color: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            color: var(--sage);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .check-item.completed span {
+            text-decoration: line-through;
+            opacity: 0.5;
+        }
+
+        /* Bubble Wrap Game Styles */
+        .bubble {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), rgba(141, 169, 154, 0.4));
+            box-shadow: inset -2px -2px 5px rgba(0,0,0,0.1), 2px 2px 5px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: all 0.1s ease;
+        }
+        .bubble.popped {
+            background: rgba(0,0,0,0.05);
+            box-shadow: inset 1px 1px 3px rgba(0,0,0,0.1);
+            transform: scale(0.95);
+            pointer-events: none;
+        }
+
+        /* Focus Timer Ring */
+        .timer-ring-circle {
+            transition: stroke-dashoffset 1s linear;
+            stroke-linecap: round;
+        }
+        
+        /* New Prompt Styling */
+        .prompt-option {
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+        .prompt-option:hover {
+            border-color: #818cf8;
+            background-color: #f5f3ff;
+            transform: translateY(-1px);
+        }
+        .dark-mode .prompt-option:hover {
+            background-color: #1e1b4b;
+        }
+        .prompt-option.selected {
+            border-color: #6366f1;
+            background-color: #eef2ff;
+        }
+        .dark-mode .prompt-option.selected {
+            background-color: #312e81;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4 md:p-8">
+
+    <!-- Header & Navigation -->
+    <header class="w-full max-w-5xl flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+        <div class="flex items-center gap-4 w-full md:w-auto">
+            <div class="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-200">
+                <i data-lucide="leaf"></i>
+            </div>
+            <div>
+                <h1 class="text-3xl font-semibold text-slate-800 dark:text-white">MindHaven</h1>
+                <p class="text-slate-500 text-sm">Mindful moments, one step at a time.</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <button onclick="toggleDarkMode()" class="p-3 rounded-xl bg-slate-200/50 hover:bg-slate-200 transition-colors" title="Toggle Theme">
+                <i data-lucide="moon" id="theme-icon"></i>
+            </button>
+            <nav class="flex space-x-1 bg-slate-200/50 p-1 rounded-2xl overflow-x-auto whitespace-nowrap">
+                <button onclick="switchTab('home')" id="btn-home" class="tab-btn px-4 py-2 rounded-xl text-sm font-medium transition-all tab-active">Home</button>
+                <button onclick="switchTab('breathe')" id="btn-breathe" class="tab-btn px-4 py-2 rounded-xl text-sm font-medium transition-all text-slate-500">Breathe</button>
+                <button onclick="switchTab('ground')" id="btn-ground" class="tab-btn px-4 py-2 rounded-xl text-sm font-medium transition-all text-slate-500">Ground</button>
+                <button onclick="switchTab('focus')" id="btn-focus" class="tab-btn px-4 py-2 rounded-xl text-sm font-medium transition-all text-slate-500">Focus</button>
+                <button onclick="switchTab('journal')" id="btn-journal" class="tab-btn px-4 py-2 rounded-xl text-sm font-medium transition-all text-slate-500">Journal</button>
+                <button onclick="switchTab('sounds')" id="btn-sounds" class="tab-btn px-4 py-2 rounded-xl text-sm font-medium transition-all text-slate-500">Sounds</button>
+                <button onclick="switchTab('games')" id="btn-games" class="tab-btn px-4 py-2 rounded-xl text-sm font-medium transition-all text-slate-500">Games</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="w-full max-w-5xl">
+        
+        <!-- Dashboard Section -->
+        <section id="section-home" class="space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Main Affirmation -->
+                <div class="lg:col-span-2 glass-card p-10 text-center flex flex-col justify-center border-violet-100 border">
+                    <h2 class="text-xs uppercase tracking-widest font-semibold mb-6 text-violet-600">Daily Affirmation</h2>
+                    <p id="affirmation-text" class="text-2xl md:text-4xl italic text-violet-600 dark:text-violet-300 font-bold leading-snug">"I am at peace with who I am."</p>
+                    <button onclick="generateAffirmation()" class="mt-8 text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300 flex items-center gap-2 mx-auto transition-colors font-medium">
+                        <i data-lucide="sparkles" size="18"></i> New Reflection
+                    </button>
+                </div>
+
+                <!-- Daily Checklist -->
+                <div class="glass-card p-6 border border-slate-100">
+                    <h3 class="font-semibold mb-4 flex items-center gap-2"><i data-lucide="check-circle" class="text-emerald-500"></i> Daily Intentions</h3>
+                    <div id="checklist" class="space-y-3">
+                        <div class="check-item flex items-center gap-3 p-2 hover:bg-emerald-50/50 rounded-lg transition-colors cursor-pointer" onclick="toggleCheck(this)">
+                            <div class="w-5 h-5 border-2 border-emerald-200 rounded flex items-center justify-center bg-white"><i data-lucide="check" class="hidden text-emerald-600 w-3 h-3"></i></div>
+                            <span class="text-sm text-slate-600">Drink 8 glasses of water</span>
+                        </div>
+                        <div class="check-item flex items-center gap-3 p-2 hover:bg-emerald-50/50 rounded-lg transition-colors cursor-pointer" onclick="toggleCheck(this)">
+                            <div class="w-5 h-5 border-2 border-emerald-200 rounded flex items-center justify-center bg-white"><i data-lucide="check" class="hidden text-emerald-600 w-3 h-3"></i></div>
+                            <span class="text-sm text-slate-600">5-minute meditation</span>
+                        </div>
+                        <div class="check-item flex items-center gap-3 p-2 hover:bg-emerald-50/50 rounded-lg transition-colors cursor-pointer" onclick="toggleCheck(this)">
+                            <div class="w-5 h-5 border-2 border-emerald-200 rounded flex items-center justify-center bg-white"><i data-lucide="check" class="hidden text-emerald-600 w-3 h-3"></i></div>
+                            <span class="text-sm text-slate-600">Express gratitude to someone</span>
+                        </div>
+                        <div class="check-item flex items-center gap-3 p-2 hover:bg-emerald-50/50 rounded-lg transition-colors cursor-pointer" onclick="toggleCheck(this)">
+                            <div class="w-5 h-5 border-2 border-emerald-200 rounded flex items-center justify-center bg-white"><i data-lucide="check" class="hidden text-emerald-600 w-3 h-3"></i></div>
+                            <span class="text-sm text-slate-600">Screen-free for 30 minutes</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass-card p-6 border border-blue-100">
+                    <h3 class="font-semibold mb-2 flex items-center gap-2"><i data-lucide="zap" class="text-amber-500"></i> Quick Tip</h3>
+                    <p class="text-slate-600 text-sm leading-relaxed">Try the "Ground" tool if you're feeling anxious. It helps reconnect you to the present moment.</p>
+                </div>
+                <div class="glass-card p-6 border border-purple-100">
+                    <h3 class="font-semibold mb-2 flex items-center gap-2"><i data-lucide="bar-chart-2" class="text-purple-500"></i> Mindfulness Streak</h3>
+                    <p class="text-slate-600 text-sm">You have logged in for 3 days straight. Small steps lead to big changes!</p>
+                </div>
+                <div class="glass-card p-6 border border-rose-100">
+                    <h3 class="font-semibold mb-2 flex items-center gap-2"><i data-lucide="heart" class="text-rose-500"></i> Self Care</h3>
+                    <p class="text-slate-600 text-sm">Don't forget to take a 5-minute break for every hour of work today.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Breathing Tool Section -->
+        <section id="section-breathe" class="hidden">
+            <div class="glass-card p-12 flex flex-col items-center justify-center min-h-[450px]">
+                <div id="breath-circle" class="breath-circle exhale mb-12">
+                    <span id="breath-instructionText" class="text-lg">Ready?</span>
+                </div>
+                <div class="text-center">
+                    <h2 class="text-2xl font-semibold mb-2">Box Breathing</h2>
+                    <p class="text-slate-500 max-w-md mx-auto mb-8">A powerful technique to calm the nervous system. Follow the visual guide.</p>
+                    <button id="breath-toggle" onclick="toggleBreathing()" class="bg-emerald-600 text-white px-10 py-4 rounded-full font-semibold hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-200">
+                        Start Session
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Grounding Tool Section -->
+        <section id="section-ground" class="hidden">
+            <div class="glass-card p-12 text-center min-h-[450px] flex flex-col items-center justify-center">
+                <div id="grounding-content" class="max-w-xl">
+                    <div id="grounding-step-icon" class="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6 text-emerald-600">
+                        <i data-lucide="eye" size="32"></i>
+                    </div>
+                    <h2 id="grounding-title" class="text-3xl font-semibold mb-4">5-4-3-2-1 Grounding</h2>
+                    <p id="grounding-desc" class="text-slate-600 text-lg mb-8 leading-relaxed">Identify 5 things you can <span class="font-bold text-emerald-600 uppercase">see</span> in your immediate environment.</p>
+                    <div class="flex gap-4 justify-center">
+                        <button onclick="nextGroundingStep()" class="bg-emerald-600 text-white px-8 py-3 rounded-full font-medium hover:bg-emerald-700 transition-all">
+                            Next Step
+                        </button>
+                        <button onclick="resetGrounding()" class="text-slate-400 hover:text-slate-600 px-4 py-3 font-medium transition-all">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Focus Timer Section -->
+        <section id="section-focus" class="hidden">
+            <div class="glass-card p-12 text-center min-h-[450px] flex flex-col items-center justify-center">
+                <div class="mb-4">
+                    <h2 class="text-2xl font-semibold mb-2">Focus Timer</h2>
+                    <div class="flex flex-col gap-2 items-center">
+                        <p id="timer-status-text" class="text-xs font-bold uppercase tracking-widest text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 px-4 py-1.5 rounded-full inline-block">Ready to Focus</p>
+                        <p id="timer-elapsed-text" class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Time Taken: 00:00</p>
+                    </div>
+                </div>
+                
+                <div class="relative flex items-center justify-center mb-12">
+                    <!-- Circular Progress -->
+                    <svg class="w-64 h-64 transform -rotate-90">
+                        <circle cx="128" cy="128" r="110" stroke="currentColor" stroke-width="8" fill="transparent" class="text-slate-100 dark:text-slate-800" />
+                        <circle id="timer-progress" cx="128" cy="128" r="110" stroke="currentColor" stroke-width="8" fill="transparent" stroke-dasharray="691" stroke-dashoffset="0" class="text-emerald-500 timer-ring-circle" />
+                    </svg>
+                    <div class="absolute text-7xl font-light text-slate-800 dark:text-white tabular-nums tracking-tight" id="timer-display">
+                        25:00
+                    </div>
+                </div>
+
+                <div class="flex gap-4 justify-center">
+                    <button id="timer-btn" onclick="toggleTimer()" class="w-16 h-16 bg-emerald-600 text-white rounded-full flex items-center justify-center hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200">
+                        <i data-lucide="play" id="timer-icon"></i>
+                    </button>
+                    <button onclick="resetTimer()" class="w-16 h-16 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 rounded-full flex items-center justify-center hover:bg-slate-200 transition-all">
+                        <i data-lucide="rotate-ccw"></i>
+                    </button>
+                </div>
+
+                <div class="flex gap-2 mt-12 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                    <button onclick="setTimer(25)" class="px-6 py-2 rounded-lg text-sm font-medium hover:bg-white dark:hover:bg-slate-700 transition-all">Focus</button>
+                    <button onclick="setTimer(5)" class="px-6 py-2 rounded-lg text-sm font-medium hover:bg-white dark:hover:bg-slate-700 transition-all">Short Break</button>
+                    <button onclick="setTimer(15)" class="px-6 py-2 rounded-lg text-sm font-medium hover:bg-white dark:hover:bg-slate-700 transition-all">Long Break</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Journal Section -->
+        <section id="section-journal" class="hidden space-y-6">
+            <!-- Journal entry area -->
+            <div class="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm">
+                <h2 class="text-xl font-semibold mb-6 text-slate-800 dark:text-white">Mood Reflection</h2>
+                <p class="text-slate-500 mb-4 text-sm">How is your heart today?</p>
+                <div class="flex flex-wrap gap-4 mb-8">
+                    <button onclick="selectEmoji('😊')" class="emoji-btn w-16 h-16 flex items-center justify-center rounded-2xl bg-white hover:bg-emerald-50 border border-slate-100 transition-all text-3xl shadow-sm">😊</button>
+                    <button onclick="selectEmoji('😌')" class="emoji-btn w-16 h-16 flex items-center justify-center rounded-2xl bg-white hover:bg-emerald-50 border border-slate-100 transition-all text-3xl shadow-sm">😌</button>
+                    <button onclick="selectEmoji('😐')" class="emoji-btn w-16 h-16 flex items-center justify-center rounded-2xl bg-white hover:bg-emerald-50 border border-slate-100 transition-all text-3xl shadow-sm">😐</button>
+                    <button onclick="selectEmoji('😔')" class="emoji-btn w-16 h-16 flex items-center justify-center rounded-2xl bg-white hover:bg-emerald-50 border border-slate-100 transition-all text-3xl shadow-sm">😔</button>
+                    <button onclick="selectEmoji('😫')" class="emoji-btn w-16 h-16 flex items-center justify-center rounded-2xl bg-white hover:bg-emerald-50 border border-slate-100 transition-all text-3xl shadow-sm">😫</button>
+                </div>
+                
+                <div class="mb-4">
+                    <div id="journal-prompt-container" class="opacity-0 transition-opacity">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Choose a reflection prompt:</span>
+                            <button onclick="refreshPrompts()" class="text-emerald-600 hover:text-emerald-700 flex items-center gap-1 text-xs font-semibold">
+                                <i data-lucide="shuffle" size="12"></i> Shuffle Options
+                            </button>
+                        </div>
+                        <div id="prompt-list" class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                            <!-- Prompt choices injected here -->
+                        </div>
+                    </div>
+                    <textarea id="journal-input" placeholder="What's on your mind? No judgments here..." class="w-full p-6 rounded-2xl border-2 border-slate-100 focus:border-indigo-400 focus:outline-none focus:ring-4 focus:ring-indigo-50 h-48 resize-none transition-all bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-slate-50 text-lg font-medium leading-relaxed"></textarea>
+                </div>
+
+                <div class="flex flex-col md:flex-row justify-between items-center mt-6 gap-4">
+                    <div id="selected-emoji" class="text-sm font-medium text-slate-500 bg-slate-100 px-4 py-2 rounded-full dark:bg-slate-800">Feeling: <span class="text-slate-800 dark:text-slate-200">None</span></div>
+                    <button onclick="saveJournalEntry()" class="w-full md:w-auto bg-emerald-600 text-white px-10 py-3 rounded-full font-semibold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100">Save Reflection</button>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <h3 class="font-semibold text-slate-700 dark:text-slate-300 px-2">Recent Reflections</h3>
+                <div id="journal-entries" class="space-y-4 custom-scrollbar overflow-y-auto max-h-[400px]">
+                    <!-- Entries injected here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Sound Section -->
+        <section id="section-sounds" class="hidden">
+            <div class="glass-card p-6 mb-6 flex flex-col md:flex-row items-center justify-between gap-4 border border-slate-100">
+                <div class="flex items-center gap-6 w-full">
+                    <div class="flex items-center gap-3 text-slate-600 dark:text-slate-400">
+                        <i data-lucide="volume-2"></i>
+                        <span class="font-medium text-sm">Volume</span>
+                    </div>
+                    <input type="range" min="0" max="100" value="50" oninput="updateVolume(this.value)" class="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-card p-8 flex items-center justify-between group cursor-pointer hover:shadow-xl transition-all border border-slate-50" onclick="toggleSound('birds')">
+                    <div class="flex items-center gap-6">
+                        <div class="w-14 h-14 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-600 shadow-inner">
+                            <i data-lucide="bird" size="28"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-lg">Morning Birds</h4>
+                            <p class="text-sm text-slate-500">Cheerful chirping at dawn.</p>
+                        </div>
+                    </div>
+                    <div id="viz-birds" class="flex items-end h-10 opacity-0 transition-opacity gap-1">
+                        <div class="bar"></div><div class="bar" style="animation-delay: 0.3s"></div><div class="bar" style="animation-delay: 0.1s"></div>
+                    </div>
+                </div>
+
+                <div class="glass-card p-8 flex items-center justify-between group cursor-pointer hover:shadow-xl transition-all border border-slate-50" onclick="toggleSound('rain')">
+                    <div class="flex items-center gap-6">
+                        <div class="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 shadow-inner">
+                            <i data-lucide="cloud-rain" size="28"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-lg">Gentle Rain</h4>
+                            <p class="text-sm text-slate-500">Perfect for deep sleep.</p>
+                        </div>
+                    </div>
+                    <div id="viz-rain" class="flex items-end h-10 opacity-0 transition-opacity gap-1">
+                        <div class="bar"></div><div class="bar" style="animation-delay: 0.2s"></div><div class="bar" style="animation-delay: 0.4s"></div>
+                    </div>
+                </div>
+
+                <div class="glass-card p-8 flex items-center justify-between group cursor-pointer hover:shadow-xl transition-all border border-slate-50" onclick="toggleSound('forest')">
+                    <div class="flex items-center gap-6">
+                        <div class="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 shadow-inner">
+                            <i data-lucide="trees" size="28"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-lg">Morning Forest</h4>
+                            <p class="text-sm text-slate-500">Breathe with the nature.</p>
+                        </div>
+                    </div>
+                    <div id="viz-forest" class="flex items-end h-10 opacity-0 transition-opacity gap-1">
+                        <div class="bar"></div><div class="bar" style="animation-delay: 0.1s"></div><div class="bar" style="animation-delay: 0.3s"></div>
+                    </div>
+                </div>
+
+                <div class="glass-card p-8 flex items-center justify-between group cursor-pointer hover:shadow-xl transition-all border border-slate-50" onclick="toggleSound('ocean')">
+                    <div class="flex items-center gap-6">
+                        <div class="w-14 h-14 bg-cyan-100 rounded-2xl flex items-center justify-center text-cyan-600 shadow-inner">
+                            <i data-lucide="waves" size="28"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-lg">Ocean Waves</h4>
+                            <p class="text-sm text-slate-500">Find your internal rhythm.</p>
+                        </div>
+                    </div>
+                    <div id="viz-ocean" class="flex items-end h-10 opacity-0 transition-opacity gap-1">
+                        <div class="bar"></div><div class="bar" style="animation-delay: 0.5s"></div><div class="bar" style="animation-delay: 0.2s"></div>
+                    </div>
+                </div>
+
+                <div class="glass-card p-8 flex items-center justify-between group cursor-pointer hover:shadow-xl transition-all border border-slate-50" onclick="toggleSound('white')">
+                    <div class="flex items-center gap-6">
+                        <div class="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-600 shadow-inner">
+                            <i data-lucide="wind" size="28"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-lg">White Noise</h4>
+                            <p class="text-sm text-slate-500">Drown out the distractions.</p>
+                        </div>
+                    </div>
+                    <div id="viz-white" class="flex items-end h-10 opacity-0 transition-opacity gap-1">
+                        <div class="bar"></div><div class="bar" style="animation-delay: 0.2s"></div><div class="bar" style="animation-delay: 0.4s"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="sound-info" class="mt-8 text-center text-slate-400 text-xs italic">
+                Audio sources provided by Google Sound Library.
+            </div>
+        </section>
+
+        <!-- Games Section -->
+        <section id="section-games" class="hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Bubble Wrap Game -->
+                <div class="glass-card p-8 flex flex-col h-[500px]">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-semibold text-xl flex items-center gap-2">
+                            <i data-lucide="grid-3x3" class="text-emerald-600"></i> Bubble Wrap
+                        </h3>
+                        <button onclick="resetBubbleWrap()" class="text-xs font-bold uppercase text-emerald-600 hover:text-emerald-700">Reset</button>
+                    </div>
+                    <p class="text-slate-500 text-sm mb-6">Satisfying pops to relieve tension.</p>
+                    <div id="bubble-container" class="grid grid-cols-5 gap-3 overflow-y-auto pr-2 custom-scrollbar flex-1">
+                        <!-- Bubbles generated by JS -->
+                    </div>
+                </div>
+
+                <!-- Zen Fidget Pad -->
+                <div class="glass-card p-8 flex flex-col h-[500px]">
+                    <h3 class="font-semibold text-xl mb-4 flex items-center gap-2">
+                        <i data-lucide="gamepad-2" class="text-purple-600"></i> Mind Fidgets
+                    </h3>
+                    <p class="text-slate-500 text-sm mb-8">Tactile interactions for restless hands.</p>
+                    <div class="space-y-8 flex-1 flex flex-col justify-center">
+                        <div class="space-y-3">
+                            <label class="text-xs font-bold text-slate-400 uppercase tracking-widest">Pressure Toggle</label>
+                            <div class="flex gap-4">
+                                <button onclick="this.classList.toggle('bg-emerald-500'); this.classList.toggle('shadow-inner')" class="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 transition-all active:scale-95 shadow-lg border border-white/20"></button>
+                                <button onclick="this.classList.toggle('bg-purple-500'); this.classList.toggle('shadow-inner')" class="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 transition-all active:scale-95 shadow-lg border border-white/20"></button>
+                                <button onclick="this.classList.toggle('bg-blue-500'); this.classList.toggle('shadow-inner')" class="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 transition-all active:scale-95 shadow-lg border border-white/20"></button>
+                            </div>
+                        </div>
+                        <div class="space-y-3">
+                            <label class="text-xs font-bold text-slate-400 uppercase tracking-widest">Satisfying Slider</label>
+                            <input type="range" class="w-full h-8 bg-slate-200 rounded-full appearance-none cursor-pointer accent-lavender" oninput="this.style.filter = `hue-rotate(${this.value}deg)`">
+                        </div>
+                        <div class="space-y-3">
+                            <label class="text-xs font-bold text-slate-400 uppercase tracking-widest">Spin Me</label>
+                            <div class="flex justify-center">
+                                <div id="fidget-spinner" onclick="spinFidget()" class="w-24 h-24 bg-gradient-to-br from-emerald-400 to-blue-500 rounded-full flex items-center justify-center text-white cursor-pointer transition-transform duration-[2000ms] ease-out">
+                                    <i data-lucide="refresh-cw" size="32"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-8 py-4 rounded-2xl opacity-0 pointer-events-none transition-all shadow-2xl text-sm font-medium z-50">
+        Entry saved successfully!
+    </div>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // --- State Management ---
+        let currentTab = 'home';
+        let isBreathing = false;
+        let breathInterval;
+        let activeSound = null;
+        let selectedMood = null;
+        let globalVolume = 0.5;
+        const journalEntries = [];
+
+        // Focus Timer State
+        let timerSeconds = 1500;
+        let totalTimerSeconds = 1500;
+        let timerActive = false;
+        let timerInterval;
+
+        // ✅ FIXED AUDIO ENGINE
+        const sharedAudio = new Audio();
+        sharedAudio.loop = true;
+        sharedAudio.preload = "auto";
+
+        const soundFiles = {
+            birds: 'https://actions.google.com/sounds/v1/animals/birds_chirping.ogg',
+            rain: 'https://actions.google.com/sounds/v1/water/rain_on_roof.ogg',
+            forest: 'https://actions.google.com/sounds/v1/nature/forest_ambience.ogg',
+            ocean: 'https://actions.google.com/sounds/v1/water/waves_crashing_on_shore.ogg',
+            white: 'https://actions.google.com/sounds/v1/weather/wind_heavy_howling.ogg',
+            chime: 'https://actions.google.com/sounds/v1/alarms/notification_chime.ogg'
+        };
+
+        const moodPrompts = {
+            '😊': [
+                "What made you smile the most today? Describe that moment.",
+                "Who is someone that brightened your day today?",
+                "What is a recent win, no matter how small, that you're proud of?",
+                "What are you looking forward to tomorrow?",
+                "What is a song that perfectly matches your current joy?",
+                "Describe a personal quality you like about yourself."
+            ],
+            '😌': [
+                "What are you feeling most grateful for in this peaceful state?",
+                "Describe the environment around you right now in detail.",
+                "What does 'inner peace' mean to you in this moment?",
+                "Write about a place where you feel completely safe and relaxed.",
+                "What is a mantra or quote that keeps you grounded?",
+                "Focus on your breath—describe the sensation of the air entering your lungs."
+            ],
+            '😐': [
+                "What is one small thing you could do to make today 1% better?",
+                "What were the main events of your day, just the facts?",
+                "Is there anything lingering on your mind that you need to let go of?",
+                "What is a habit you'd like to start or improve?",
+                "If today was a book title, what would it be called?",
+                "What's the most interesting thing you learned or noticed today?"
+            ],
+            '😔': [
+                "It's okay to feel this way. What is something kind you can do for yourself right now?",
+                "If your sadness had a voice, what would it be trying to tell you?",
+                "Write a letter to yourself offering comfort and validation.",
+                "What is one thing that usually helps you feel a little lighter?",
+                "Recall a time you overcame a difficult day. What helped then?",
+                "Identify three things you can control right now."
+            ],
+            '😫': [
+                "What is the biggest source of pressure, and how can you break it into three tiny steps?",
+                "List everything currently on your mind, then circle what you can actually control.",
+                "What is a 'worst-case scenario' you're fearing, and what are three reasons it might not happen?",
+                "Describe the physical sensations of your stress—where do you feel it in your body?",
+                "If you could say 'no' to one thing today, what would it be?",
+                "What does your mind need most right now: rest, motion, or connection?"
+            ]
+        };
+
+        function updateVolume(val) {
+            globalVolume = val / 100;
+            sharedAudio.volume = globalVolume;
+        }
+
+        // ✅ FINAL FIXED FUNCTION
+        function toggleSound(soundType) {
+            const targetViz = `viz-${soundType}`;
+
+            if (activeSound === soundType) {
+                stopCurrentAudio();
+                activeSound = null;
+                return;
+            }
+
+            stopCurrentAudio();
+
+            try {
+                sharedAudio.src = soundFiles[soundType];
+                sharedAudio.volume = globalVolume;
+                sharedAudio.loop = (soundType !== 'chime');
+
+                sharedAudio.play()
+                    .then(() => {
+                        activeSound = soundType;
+                        if (document.getElementById(targetViz)) {
+                            document.getElementById(targetViz).style.opacity = '1';
+                        }
+                        showToast(`Now playing: ${soundType}`);
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        showToast("Click again to enable audio");
+                    });
+
+            } catch (e) {
+                console.error(e);
+                showToast("Audio failed");
+            }
+        }
+
+        function stopCurrentAudio() {
+            sharedAudio.pause();
+            sharedAudio.currentTime = 0;
+            document.querySelectorAll('[id^="viz-"]').forEach(v => v.style.opacity = '0');
+        }
+
+        // --- UI Logic ---
+        function switchTab(tabId) {
+            document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('tab-active');
+                b.classList.add('text-slate-500');
+            });
+
+            document.getElementById(`section-${tabId}`).classList.remove('hidden');
+            document.getElementById(`btn-${tabId}`).classList.add('tab-active');
+            document.getElementById(`btn-${tabId}`).classList.remove('text-slate-500');
+            
+            currentTab = tabId;
+            if (tabId !== 'breathe' && isBreathing) toggleBreathing();
+            if (tabId === 'games') resetBubbleWrap();
+            
+            lucide.createIcons();
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const icon = document.getElementById('theme-icon');
+            if (document.body.classList.contains('dark-mode')) {
+                icon.setAttribute('data-lucide', 'sun');
+            } else {
+                icon.setAttribute('data-lucide', 'moon');
+            }
+            lucide.createIcons();
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.opacity = '1';
+            t.style.bottom = '40px';
+            setTimeout(() => {
+                t.style.opacity = '0';
+                t.style.bottom = '20px';
+            }, 3000);
+        }
+
+        function toggleCheck(el) {
+            el.classList.toggle('completed');
+            const icon = el.querySelector('i');
+            icon.classList.toggle('hidden');
+        }
+
+        // --- Focus Timer Logic ---
+        function setTimer(mins) {
+            clearInterval(timerInterval);
+            timerActive = false;
+            timerSeconds = mins * 60;
+            totalTimerSeconds = timerSeconds;
+            updateTimerDisplay();
+            updateTimerIcon();
+            updateTimerProgress(0);
+            updateTimerStatus();
+        }
+
+        function toggleTimer() {
+            if (timerActive) {
+                clearInterval(timerInterval);
+                timerActive = false;
+            } else {
+                timerActive = true;
+                timerInterval = setInterval(() => {
+                    if (timerSeconds > 0) {
+                        timerSeconds--;
+                        updateTimerDisplay();
+                        const percent = ((totalTimerSeconds - timerSeconds) / totalTimerSeconds) * 691;
+                        updateTimerProgress(percent);
+                    } else {
+                        clearInterval(timerInterval);
+                        timerActive = false;
+                        updateTimerIcon();
+                        toggleSound('chime');
+                        showToast("Focus session complete! Time for a break.");
+                        updateTimerStatus();
+                    }
+                }, 1000);
+            }
+            updateTimerIcon();
+            updateTimerStatus();
+        }
+
+        function resetTimer() {
+            setTimer(totalTimerSeconds / 60 || 25);
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(timerSeconds / 60);
+            const secs = timerSeconds % 60;
+            document.getElementById('timer-display').textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            
+            // Update Elapsed Time
+            const elapsedSeconds = totalTimerSeconds - timerSeconds;
+            const eMins = Math.floor(elapsedSeconds / 60);
+            const eSecs = elapsedSeconds % 60;
+            document.getElementById('timer-elapsed-text').textContent = `Time Taken: ${eMins.toString().padStart(2, '0')}:${eSecs.toString().padStart(2, '0')}`;
+        }
+
+        function updateTimerProgress(offset) {
+            const ring = document.getElementById('timer-progress');
+            ring.style.strokeDashoffset = offset;
+        }
+
+        function updateTimerIcon() {
+            document.getElementById('timer-icon').setAttribute('data-lucide', timerActive ? 'pause' : 'play');
+            lucide.createIcons();
+        }
+
+        function updateTimerStatus() {
+            const statusEl = document.getElementById('timer-status-text');
+            if (!timerActive) {
+                if (timerSeconds === totalTimerSeconds) {
+                    statusEl.textContent = (totalTimerSeconds >= 1500) ? "Ready to Focus" : "Ready for Break";
+                } else if (timerSeconds === 0) {
+                    statusEl.textContent = "Session Complete";
+                } else {
+                    statusEl.textContent = "Timer Paused";
+                }
+            } else {
+                statusEl.textContent = (totalTimerSeconds >= 1500) ? "Focusing..." : "On Break...";
+            }
+        }
+
+        // --- Feature Logic (Breathing, Grounding, Journal) ---
+        function generateAffirmation() {
+            const textEl = document.getElementById('affirmation-text');
+            const affirmations = [
+                "I am at peace with who I am.",
+                "Today is a fresh start.",
+                "I am resilient and can handle challenges.",
+                "My peace is worth protecting.",
+                "I deserve to rest and recharge.",
+                "Every breath I take releases tension.",
+                "I focus on what I can control.",
+                "I am doing my best, and that is enough."
+            ];
+            textEl.style.opacity = '0';
+            setTimeout(() => {
+                const random = affirmations[Math.floor(Math.random() * affirmations.length)];
+                textEl.textContent = `"${random}"`;
+                textEl.style.opacity = '1';
+            }, 300);
+        }
+
+        function toggleBreathing() {
+            const btn = document.getElementById('breath-toggle');
+            const circle = document.getElementById('breath-circle');
+            const text = document.getElementById('breath-instructionText');
+            
+            if (!isBreathing) {
+                isBreathing = true;
+                btn.textContent = "End Session";
+                btn.classList.replace('bg-emerald-600', 'bg-rose-500');
+                let step = 0; 
+                const runCycle = () => {
+                    if (step === 0) { circle.classList.add('inhale'); circle.classList.remove('exhale'); text.textContent = "Inhale..."; }
+                    else if (step === 1) text.textContent = "Hold...";
+                    else if (step === 2) { circle.classList.add('exhale'); circle.classList.remove('inhale'); text.textContent = "Exhale..."; }
+                    else if (step === 3) text.textContent = "Hold...";
+                    step = (step + 1) % 4;
+                };
+                runCycle();
+                breathInterval = setInterval(runCycle, 4000);
+            } else {
+                isBreathing = false;
+                clearInterval(breathInterval);
+                btn.textContent = "Start Session";
+                btn.classList.replace('bg-rose-500', 'bg-emerald-600');
+                circle.classList.add('exhale');
+                circle.classList.remove('inhale');
+                text.textContent = "Ready?";
+            }
+        }
+
+        let currentGroundingStep = 0;
+        const groundingSteps = [
+            { icon: 'eye', title: '5 Things You See', desc: 'Identify 5 things you can <span class="font-bold text-emerald-600 uppercase">see</span> nearby.' },
+            { icon: 'hand', title: '4 Things You Feel', desc: 'Identify 4 things you can <span class="font-bold text-emerald-600 uppercase">touch</span> right now.' },
+            { icon: 'ear', title: '3 Things You Hear', desc: 'Identify 3 distinct <span class="font-bold text-emerald-600 uppercase">sounds</span>.' },
+            { icon: 'nose', title: '2 Things You Smell', desc: 'Identify 2 <span class="font-bold text-emerald-600 uppercase">smells</span>.' },
+            { icon: 'tongue', title: '1 Thing You Taste', desc: 'Identify 1 thing you can <span class="font-bold text-emerald-600 uppercase">taste</span>.' },
+            { icon: 'smile', title: 'All Grounded', desc: 'Exercise complete. You are here, you are present.' }
+        ];
+
+        function nextGroundingStep() {
+            currentGroundingStep = (currentGroundingStep + 1) % groundingSteps.length;
+            const step = groundingSteps[currentGroundingStep];
+            document.getElementById('grounding-title').textContent = step.title;
+            document.getElementById('grounding-desc').innerHTML = step.desc;
+            document.getElementById('grounding-step-icon').innerHTML = `<i data-lucide="${step.icon}" size="32"></i>`;
+            lucide.createIcons();
+        }
+
+        function resetGrounding() {
+            currentGroundingStep = 0;
+            const step = groundingSteps[0];
+            document.getElementById('grounding-title').textContent = step.title;
+            document.getElementById('grounding-desc').innerHTML = step.desc;
+            document.getElementById('grounding-step-icon').innerHTML = `<i data-lucide="${step.icon}" size="32"></i>`;
+            lucide.createIcons();
+        }
+
+        function selectEmoji(emoji) {
+            selectedMood = emoji;
+            document.querySelectorAll('.emoji-btn').forEach(b => {
+                b.classList.remove('border-emerald-500', 'bg-emerald-50', 'ring-2', 'ring-emerald-200');
+                if (b.textContent === emoji) b.classList.add('border-emerald-500', 'bg-emerald-50', 'ring-2', 'ring-emerald-200');
+            });
+            document.querySelector('#selected-emoji span').textContent = emoji;
+            
+            refreshPrompts();
+        }
+
+        function refreshPrompts() {
+            if (!selectedMood || !moodPrompts[selectedMood]) return;
+            
+            const promptContainer = document.getElementById('journal-prompt-container');
+            const promptList = document.getElementById('prompt-list');
+            
+            const allPrompts = [...moodPrompts[selectedMood]];
+            const shuffled = allPrompts.sort(() => 0.5 - Math.random());
+            const selected = shuffled.slice(0, 4); // Pick 4 prompts
+            
+            promptList.innerHTML = selected.map(prompt => `
+                <div onclick="usePrompt(this)" class="prompt-option p-3 rounded-xl bg-white dark:bg-slate-800 border-2 border-slate-50 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 leading-snug">
+                    ${prompt}
+                </div>
+            `).join('');
+            
+            promptContainer.classList.remove('opacity-0');
+            promptContainer.classList.add('opacity-100');
+            lucide.createIcons();
+        }
+
+        function usePrompt(el) {
+            // Mark as selected
+            document.querySelectorAll('.prompt-option').forEach(opt => opt.classList.remove('selected'));
+            el.classList.add('selected');
+            
+            const promptText = el.textContent.trim();
+            const textarea = document.getElementById('journal-input');
+            
+            // Optional: Auto-fill textarea if empty or append
+            if (!textarea.value.trim()) {
+                textarea.value = promptText + "\n\n";
+                textarea.focus();
+            } else {
+                showToast("Prompt chosen: Use it to guide your writing!");
+            }
+        }
+
+        function saveJournalEntry() {
+            const input = document.getElementById('journal-input');
+            if (!input.value.trim() && !selectedMood) return;
+            const entry = { 
+                id: Date.now(),
+                mood: selectedMood || '📝', 
+                text: input.value, 
+                date: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) 
+            };
+            journalEntries.unshift(entry);
+            
+            // Reset
+            input.value = ''; selectedMood = null;
+            document.querySelector('#selected-emoji span').textContent = 'None';
+            document.getElementById('journal-prompt-container').classList.add('opacity-0');
+            document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('border-emerald-500', 'bg-emerald-50', 'ring-2', 'ring-emerald-200'));
+            
+            renderJournal();
+            showToast("Reflection saved.");
+        }
+
+        function editJournalEntry(id) {
+            const index = journalEntries.findIndex(e => e.id === id);
+            if (index === -1) return;
+
+            const entry = journalEntries[index];
+            const input = document.getElementById('journal-input');
+            input.value = entry.text;
+            selectEmoji(entry.mood);
+            
+            journalEntries.splice(index, 1);
+            renderJournal();
+            
+            document.getElementById('section-journal').scrollIntoView({ behavior: 'smooth' });
+            showToast("Editing reflection...");
+        }
+
+        function deleteJournalEntry(id) {
+            const index = journalEntries.findIndex(e => e.id === id);
+            if (index === -1) return;
+            journalEntries.splice(index, 1);
+            renderJournal();
+            showToast("Reflection removed.");
+        }
+
+        function renderJournal() {
+            const container = document.getElementById('journal-entries');
+            if (journalEntries.length === 0) {
+                container.innerHTML = '<div class="text-center py-12 text-slate-400 italic">Your digital sanctuary awaits its first entry.</div>';
+                return;
+            }
+            container.innerHTML = journalEntries.map(e => `
+                <div class="glass-card p-6 flex gap-6 border border-slate-100 dark:border-slate-800 relative group">
+                    <div class="text-4xl">${e.mood}</div>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="text-[10px] text-emerald-600 font-bold uppercase">${e.date}</div>
+                            <div class="flex gap-1">
+                                <button onclick="editJournalEntry(${e.id})" class="opacity-0 group-hover:opacity-100 p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-all text-slate-400 hover:text-emerald-600" title="Edit entry">
+                                    <i data-lucide="edit-2" size="14"></i>
+                                </button>
+                                <button onclick="deleteJournalEntry(${e.id})" class="opacity-0 group-hover:opacity-100 p-2 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-lg transition-all text-slate-400 hover:text-rose-600" title="Delete entry">
+                                    <i data-lucide="trash-2" size="14"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed pr-8 whitespace-pre-wrap">${e.text || 'Mood check-in only'}</p>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function resetBubbleWrap() {
+            const container = document.getElementById('bubble-container');
+            container.innerHTML = '';
+            for(let i = 0; i < 50; i++) {
+                const b = document.createElement('div');
+                b.className = 'bubble';
+                b.onclick = function() {
+                    this.classList.add('popped');
+                };
+                container.appendChild(b);
+            }
+        }
+
+        let spinAngle = 0;
+        function spinFidget() {
+            const spinner = document.getElementById('fidget-spinner');
+            spinAngle += 1080 + Math.random() * 1080;
+            spinner.style.transform = `rotate(${spinAngle}deg)`;
+        }
+
+        window.onload = () => { 
+            generateAffirmation();
+            setTimer(25); 
+            renderJournal();
+        };
+
+    </script>
+</body>
+</html>
